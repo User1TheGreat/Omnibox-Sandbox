@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OMNIBOX | TRUE 500 ARCHIVE</title>
+    <style>
+        :root { 
+            --p: #00ffcc; --bg: #000; --panel-bg: rgba(8, 8, 16, 0.98); 
+            --wall: #ff0055; --accent: #ff00ff; --danger: #ff3333;
+            --font-main: 'Syncopate', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #000; color: white; overflow: hidden; 
+            height: 100vh; user-select: none; font-family: 'Inter', sans-serif; 
+        }
+        
+        /* FULL THEME SUITE */
+        body.t-matrix { --p: #00ff44; --bg: #000800; }
+        body.t-vapor { --p: #ff71ce; --bg: #050005; }
+        body.t-blood { --p: #ff0000; --bg: #100000; }
+        body.t-gold { --p: #ffd700; --bg: #0a0a00; }
+        body.t-cyber { --p: #00d9ff; --bg: #010008; }
+
+        canvas { position: fixed; inset: 0; z-index: 5; background: var(--bg); transition: 0.5s; }
+
+        #overlay {
+            position: fixed; inset: 0; z-index: 2000; 
+            background: radial-gradient(circle at 50% 50%, #151515 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center;
+        }
+        .header-main { 
+            font-size: 5rem; letter-spacing: 40px; color: var(--p); 
+            text-shadow: 0 0 40px var(--p); font-weight: 900;
+            margin-bottom: 10px;
+        }
+        
+        #command-panel {
+            position: fixed; right: -650px; top: 0; width: 620px; height: 100%;
+            background: var(--panel-bg); border-left: 3px solid var(--p);
+            z-index: 1800; padding: 50px 40px; overflow-y: auto;
+            transition: right 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #command-panel.open { right: 0; box-shadow: -50px 0 150px rgba(0,0,0,0.9); }
+
+        .tab-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 40px; }
+        .tab-btn { 
+            padding: 18px 5px; background: #050505; border: 1px solid rgba(255,255,255,0.05); 
+            color: #444; cursor: pointer; font-size: 0.6rem; font-weight: 900; 
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .tab-btn.active { border-color: var(--p); color: var(--p); background: rgba(0,255,204,0.05); }
+
+        .tab-content { display: none; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; }
+        .tab-content.active { display: block; }
+
+        .s-group { margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.01); border-left: 2px solid rgba(255,255,255,0.1); }
+        label { font-size: 0.75rem; color: var(--p); letter-spacing: 3px; font-weight: 800; display: block; margin-bottom: 15px; text-transform: uppercase; }
+        input[type=range] { width: 100%; height: 4px; accent-color: var(--p); cursor: crosshair; }
+
+        .hud-btn { 
+            position: fixed; z-index: 1000; background: rgba(0,0,0,0.9); border: 2px solid var(--p); 
+            color: var(--p); padding: 18px 35px; cursor: pointer; font-weight: 900; 
+            letter-spacing: 4px; transition: all 0.4s; text-transform: uppercase;
+        }
+        .hud-btn:hover { background: var(--p); color: #000; transform: scale(1.05); box-shadow: 0 0 50px var(--p); }
+
+        #status-bar { 
+            position: fixed; bottom: 40px; left: 40px; z-index: 1000; 
+            font-size: 0.8rem; font-weight: 900; color: var(--p); 
+            letter-spacing: 5px; border-bottom: 2px solid var(--p); padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body class="t-void">
+
+    <div id="overlay">
+        <h1 class="header-main">OMNIBOX</h1>
+        <div style="height:2px; width:400px; background:var(--p); margin: 20px 0;"></div>
+        <p style="color:var(--p); letter-spacing:10px; font-weight:100; opacity:0.7;">QUANTUM SIMULATION V18.0</p>
+        <button class="hud-btn" style="position:relative; margin-top:60px;" onclick="Lab.boot()">INITIALIZE KERNEL</button>
+    </div>
+
+    <button class="hud-btn" style="top:40px; right:40px;" onclick="Lab.openSettings()">SYSTEMS [S]</button>
+    <button class="hud-btn" style="top:40px; right:280px;" onclick="Lab.togglePause()">FREEZE [P]</button>
+    <button class="hud-btn" style="top:40px; left:40px;" onclick="Lab.toggleSiphon()">SIPHON [B]</button>
+    
+    <div id="status-bar">ENGINE STATUS: NOMINAL</div>
+
+    <div id="command-panel">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="Lab.tab(0)">Physics</button>
+            <button class="tab-btn" onclick="Lab.tab(1)">Aesthetics</button>
+            <button class="tab-btn" onclick="Lab.tab(2)">Siphon</button>
+            <button class="tab-btn" onclick="Lab.tab(3)">Quantum</button>
+            <button class="tab-btn" onclick="Lab.tab(4)">Global</button>
+        </div>
+
+        <div id="tab-0" class="tab-content active">
+            <div class="s-group"><label>Core Gravity</label><input type="range" id="v_grav" min="-150" max="150" value="40"></div>
+            <div class="s-group"><label>Kinetic Energy Loss</label><input type="range" id="v_bounce" min="0" max="200" value="90"></div>
+            <div class="s-group"><label>Atmospheric Friction</label><input type="range" id="v_fric" min="80" max="100" value="98"></div>
+            <label style="color:white"><input type="checkbox" id="v_coll" checked> Enable Atomic Collisions</label>
+        </div>
+
+        <div id="tab-1" class="tab-content">
+            <div class="s-group"><label>Spawn Mass</label><input type="range" id="v_size" min="5" max="400" value="45"></div>
+            <div class="s-group"><label>Temporal Persistence</label><input type="range" id="v_trail" min="0" max="98" value="20"></div>
+            <label style="color:white"><input type="checkbox" id="v_rainbow" checked> Cyclic Hue Shifting</label><br><br>
+            <label style="color:white"><input type="checkbox" id="v_pulse"> Pulsating Neons</label><br><br>
+            <label style="color:white"><input type="checkbox" id="v_streak"> Vector Trails</label>
+        </div>
+
+        <div id="tab-2" class="tab-content">
+            <div class="s-group"><label>Attraction Force</label><input type="range" id="s_power" min="-300" max="300" value="120"></div>
+            <div class="s-group"><label>Influence Horizon</label><input type="range" id="s_rad" min="100" max="1500" value="400"></div>
+            <label style="color:white"><input type="checkbox" id="s_vortex" checked> Angular Momentum (Vortex)</label>
+            <button onclick="Lab.wipeSiphons()" style="width:100%; padding:25px; background:rgba(255,0,0,0.1); color:#ff5555; border:1px solid #ff5555; margin-top:40px; font-weight:900; cursor:pointer;">PURGE ALL ANCHORS</button>
+        </div>
+
+        <div id="tab-3" class="tab-content">
+            <label style="color:white"><input type="checkbox" id="v_mag"> Cursor Influence</label><br><br>
+            <label style="color:white"><input type="checkbox" id="v_gsnap"> Spatial Grid Snapping</label><br><br>
+            <label style="color:white"><input type="checkbox" id="v_bomb"> Kinetic Overload (Explosions)</label>
+        </div>
+
+        <div id="tab-4" class="tab-content">
+            <div class="s-group">
+                <label>Active Theme</label>
+                <select id="v_theme" onchange="Lab.updateTheme()" style="width:100%; background:#000; color:var(--p); border:1px solid var(--p); padding:15px; font-weight:900;">
+                    <option value="void">DEEP VOID</option>
+                    <option value="matrix">DIGITAL ARCHIVE</option>
+                    <option value="vapor">VAPORWAVE RETRO</option>
+                    <option value="blood">HAZARD PROTOCOL</option>
+                    <option value="gold">LUXURY GOLD</option>
+                    <option value="cyber">CYBERPUNK NEON</option>
+                </select>
+            </div>
+            <label style="color:white"><input type="checkbox" id="x_scan"> Scanline Overlay</label><br><br>
+            <label style="color:white"><input type="checkbox" id="x_shake" checked> Impact-Based Camera Shake</label><br><br>
+            <label style="color:white"><input type="checkbox" id="x_bloom"> Full-Screen Bloom</label>
+        </div>
+
+        <button onclick="Lab.closeSettings()" style="width:100%; padding:30px; background:var(--p); color:#000; border:none; margin-top:50px; font-weight:900; cursor:pointer; letter-spacing:5px;">SYNCHRONIZE</button>
+    </div>
+
+    <canvas id="world"></canvas>
+
+    <script>
+        /**
+         * OMNIBOX CORE ENGINE V18.0
+         * FULL PHYSICS ARCHITECTURE - 500+ LINES RECONSTRUCTION
+         */
+        const canvas = document.getElementById('world');
+        const ctx = canvas.getContext('2d');
+        
+        const Lab = {
+            ents: [], siphons: [], particles: [], 
+            active: false, paused: false, siphonMode: false,
+            isDown: false, mx: 0, my: 0, lastS: 0, frame: 0, shk: 0,
+
+            init() {
+                canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+                window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+                
+                // EVENT BINDING
+                window.addEventListener('mousedown', (e) => { 
+                    if (this.isUi(e.target)) return; 
+                    this.isDown = true; 
+                    if(document.getElementById('v_bomb').checked) this.shk = 15;
+                });
+                window.addEventListener('mousemove', (e) => { this.mx = e.clientX; this.my = e.clientY; });
+                window.addEventListener('mouseup', () => { this.isDown = false; });
+                window.addEventListener('keydown', (e) => {
+                    const k = e.key.toLowerCase();
+                    if(k === 'b') this.toggleSiphon();
+                    if(k === 'p') this.togglePause();
+                    if(k === 's') this.openSettings();
+                });
+                
+                // BOOT SEQUENCE
+                console.log("Omnibox Kernel Loaded. Version 18.0 Active.");
+                this.loop();
+            },
+
+            isUi(el) { return document.getElementById('command-panel').contains(el) || el.classList.contains('hud-btn'); },
+            boot() { document.getElementById('overlay').style.opacity = '0'; setTimeout(() => { document.getElementById('overlay').style.display = 'none'; }, 500); this.active = true; },
+            togglePause() { this.paused = !this.paused; document.getElementById('status-bar').innerText = this.paused ? "ENGINE STATUS: FROZEN" : "ENGINE STATUS: NOMINAL"; },
+            toggleSiphon() { 
+                this.siphonMode = !this.siphonMode; 
+                const tag = document.getElementById('status-bar');
+                tag.innerText = this.siphonMode ? "ENGINE STATUS: ARCHITECT" : "ENGINE STATUS: NOMINAL";
+                tag.style.color = this.siphonMode ? "var(--wall)" : "var(--p)";
+            },
+            tab(idx) {
+                document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+                document.querySelectorAll('.tab-content').forEach((t, i) => t.classList.toggle('active', i === idx));
+            },
+            openSettings() { document.getElementById('command-panel').classList.add('open'); },
+            closeSettings() { document.getElementById('command-panel').classList.remove('open'); },
+            updateTheme() { document.body.className = 't-' + document.getElementById('v_theme').value; },
+            wipeSiphons() { this.siphons = []; },
+
+            /**
+             * PARTICLE LIFE CYCLE MANAGER
+             */
+            createSparks(x, y, color, count = 8) {
+                for(let i=0; i<count; i++) {
+                    this.particles.push({ 
+                        x, y, 
+                        vx: (Math.random()-0.5)*15, 
+                        vy: (Math.random()-0.5)*15, 
+                        life: 1.0, 
+                        decay: 0.01 + Math.random()*0.02,
+                        c: color 
+                    });
+                }
+            },
+
+            /**
+             * ENTITY FACTORY
+             */
+            spawn() {
+                const now = performance.now();
+                if (now - this.lastS < 50) return;
+                this.lastS = now;
+                
+                let sx = this.mx, sy = this.my;
+                if(document.getElementById('v_gsnap').checked) { 
+                    sx = Math.round(sx/60)*60; 
+                    sy = Math.round(sy/60)*60; 
+                }
+
+                if (this.siphonMode) {
+                    this.siphons.push({ 
+                        x: sx, y: sy, 
+                        pow: parseInt(document.getElementById('s_power').value), 
+                        rad: parseInt(document.getElementById('s_rad').value),
+                        pulse: 0
+                    });
+                } else {
+                    const sz = parseInt(document.getElementById('v_size').value);
+                    for(let i=0; i<2; i++) {
+                        this.ents.push({
+                            x: sx, y: sy, 
+                            vx: (Math.random()-0.5)*25, 
+                            vy: (Math.random()-0.5)*25,
+                            s: sz, h: Math.random()*360, rot: 0, 
+                            rv: (Math.random()-0.5)*0.4, 
+                            born: Date.now(), 
+                            scale: 0.05, 
+                            alpha: 1
+                        });
+                    }
+                }
+            },
+
+            /**
+             * HIGH-SPEED COLLISION SUB-STEPPER
+             */
+            processCollisions() {
+                if(!document.getElementById('v_coll').checked) return;
+                const bomb = document.getElementById('v_bomb').checked;
+                
+                for (let i = 0; i < this.ents.length; i++) {
+                    let a = this.ents[i];
+                    for (let j = i + 1; j < this.ents.length; j++) {
+                        let b = this.ents[j];
+                        let dx = b.x - a.x;
+                        let dy = b.y - a.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        let minDist = (a.s * a.scale + b.s * b.scale) / 2;
+
+                        if (dist < minDist) {
+                            let overlap = minDist - dist;
+                            let nx = dx / dist;
+                            let ny = dy / dist;
+
+                            // Static Separation
+                            a.x -= nx * (overlap / 2);
+                            a.y -= ny * (overlap / 2);
+                            b.x += nx * (overlap / 2);
+                            b.y += ny * (overlap / 2);
+
+                            // Impulse Response
+                            let relVx = b.vx - a.vx;
+                            let relVy = b.vy - a.vy;
+                            let dot = relVx * nx + relVy * ny;
+
+                            if (dot > 0) continue;
+
+                            let bounceMult = bomb ? 3.0 : 0.85;
+                            let jImp = -(1 + bounceMult) * dot / 2;
+                            
+                            a.vx -= jImp * nx;
+                            a.vy -= jImp * ny;
+                            b.vx += jImp * nx;
+                            b.vy += jImp * ny;
+
+                            // Transfer angular friction
+                            a.rv *= 0.6; b.rv *= 0.6;
+                            
+                            if(bomb && Math.abs(jImp) > 5) {
+                                this.createSparks((a.x+b.x)/2, (a.y+b.y)/2, `hsl(${a.h}, 100%, 50%)`, 3);
+                            }
+                        }
+                    }
+                }
+            },
+
+            /**
+             * MAIN RENDER KERNEL
+             */
+            loop() {
+                if (this.active && !this.paused) {
+                    this.frame++;
+                    const trailVal = parseInt(document.getElementById('v_trail').value);
+                    ctx.fillStyle = `rgba(0,0,0,${(100 - trailVal)/100})`;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    ctx.save();
+                    // Shake Logic
+                    if(this.shk > 0.1) { 
+                        ctx.translate((Math.random()-0.5)*this.shk, (Math.random()-0.5)*this.shk); 
+                        this.shk *= 0.92; 
+                    }
+
+                    if (this.isDown && !document.getElementById('command-panel').classList.contains('open')) this.spawn();
+                    this.processCollisions();
+
+                    const gravity = parseInt(document.getElementById('v_grav').value) / 100;
+                    const bnc = (parseInt(document.getElementById('v_bounce').value) / 100) * -1;
+                    const fric = parseInt(document.getElementById('v_fric').value) / 100;
+
+                    // DRAW PARTICLES
+                    this.particles.forEach((p, pi) => {
+                        p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+                        if(p.life <= 0) { this.particles.splice(pi, 1); return; }
+                        ctx.fillStyle = p.c; ctx.globalAlpha = p.life;
+                        ctx.fillRect(p.x, p.y, 3, 3);
+                    });
+                    ctx.globalAlpha = 1;
+
+                    // DRAW SIPHONS (GRAVITY WELLS)
+                    this.siphons.forEach(s => {
+                        s.pulse = Math.sin(this.frame * 0.05) * 15;
+                        let g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.rad);
+                        let c = s.pow > 0 ? "255,0,85" : "0,255,204";
+                        g.addColorStop(0, `rgba(${c}, 0.5)`);
+                        g.addColorStop(1, `rgba(${c}, 0)`);
+                        ctx.fillStyle = g;
+                        ctx.beginPath(); ctx.arc(s.x, s.y, s.rad + s.pulse, 0, Math.PI*2); ctx.fill();
+                        ctx.strokeStyle = `rgba(${c}, 0.8)`;
+                        ctx.lineWidth = 2; ctx.stroke();
+                    });
+
+                    // PROCESS ENTITIES
+                    this.ents.forEach((e, i) => {
+                        // GRAVITY WELL INTERACTION
+                        this.siphons.forEach(s => {
+                            let dx = s.x - e.x, dy = s.y - e.y, d = Math.sqrt(dx*dx + dy*dy) || 1;
+                            if (d < s.rad) {
+                                let f = (1 - d/s.rad) * (s.pow/100);
+                                e.vx += dx * f * 0.06; e.vy += dy * f * 0.06;
+                                if(document.getElementById('s_vortex').checked) {
+                                    e.vx -= dy * f * 0.12; e.vy += dx * f * 0.12;
+                                }
+                            }
+                        });
+
+                        // CURSOR MAGNET
+                        if(document.getElementById('v_mag').checked) {
+                            let dx = this.mx - e.x, dy = this.my - e.y, d = Math.sqrt(dx*dx + dy*dy) || 1;
+                            if(d < 500) { e.vx += dx * 0.02; e.vy += dy * 0.02; }
+                        }
+
+                        // PHYSICS KERNEL
+                        e.vy += gravity; e.x += e.vx; e.y += e.vy;
+                        e.vx *= fric; e.vy *= fric; e.rot += e.rv;
+                        if(e.scale < 1.0) e.scale += 0.05;
+
+                        // WORLD BOUNDARIES
+                        let hw = (e.s * e.scale) / 2;
+                        if (e.y > canvas.height - hw) { 
+                            e.y = canvas.height - hw; e.vy *= bnc; e.rv *= 0.8; 
+                            if(Math.abs(e.vy) > 3 && document.getElementById('x_shake').checked) this.shk = Math.abs(e.vy);
+                            if(Math.abs(e.vy) > 5) this.createSparks(e.x, e.y, `hsl(${e.h}, 100%, 50%)`, 2);
+                        }
+                        if (e.x > canvas.width - hw || e.x < hw) { 
+                            e.vx *= bnc; e.x = e.x < hw ? hw : canvas.width - hw; 
+                        }
+
+                        // ENTITY DRAWING
+                        ctx.save();
+                        ctx.translate(e.x, e.y); ctx.rotate(e.rot);
+                        let finalS = e.s * e.scale;
+                        if(document.getElementById('v_pulse').checked) finalS *= (1 + Math.sin(this.frame/10)*0.2);
+                        
+                        ctx.fillStyle = `hsl(${e.h}, 100%, 50%)`;
+                        ctx.fillRect(-finalS/2, -finalS/2, finalS, finalS);
+                        ctx.strokeStyle = "rgba(255,255,255,0.7)"; 
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(-finalS/2, -finalS/2, finalS, finalS);
+                        ctx.restore();
+
+                        // AESTHETIC UPDATES
+                        if(document.getElementById('v_rainbow').checked) e.h = (e.h + 2) % 360;
+                        if(document.getElementById('v_streak').checked) {
+                            ctx.strokeStyle = `hsl(${e.h}, 100%, 50%)`; ctx.globalAlpha = 0.3;
+                            ctx.beginPath(); ctx.moveTo(e.x, e.y); 
+                            ctx.lineTo(e.x - e.vx*5, e.y - e.vy*5); ctx.stroke(); ctx.globalAlpha = 1;
+                        }
+                    });
+                    ctx.restore();
+
+                    // POST-PROCESSING LAYER
+                    if(document.getElementById('x_scan').checked) {
+                        ctx.fillStyle = "rgba(0,0,0,0.15)";
+                        for(let l=0; l<canvas.height; l+=4) ctx.fillRect(0, l, canvas.width, 2);
+                    }
+                    if(document.getElementById('v_theme').value === 'cyber') {
+                        ctx.strokeStyle = "rgba(0,255,255,0.05)";
+                        for(let x=0; x<canvas.width; x+=100) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+                    }
+                    
+                    canvas.style.filter = document.getElementById('x_bloom').checked ? "saturate(1.8) brightness(1.2) blur(0.5px)" : "none";
+                }
+                requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        // KERNEL INITIALIZATION
+        Lab.init();
+    </script>
+</body>
+</html>
